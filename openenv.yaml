@@ -1,0 +1,8 @@
+spec_version: 1
+name: openenv-scalar
+type: container
+runtime: docker
+app:
+  entrypoint: "python server/app.py"
+  port: 7860
+supports_concurrent_sessions: false
