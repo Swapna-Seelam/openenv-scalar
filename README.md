@@ -1,3 +1,13 @@
+---
+title: OpenEnv Scalar
+emoji: 📧
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # OpenEnv Scalar - Email Triage Challenge
 
 This project is a submission for the Meta OpenEnv RL Challenge Hackathon.
