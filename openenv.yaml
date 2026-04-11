@@ -6,3 +6,20 @@ app:
   entrypoint: "python server/app.py"
   port: 7860
 supports_concurrent_sessions: false
+tasks:
+  - id: "task_1"
+    name: "Email Triage Task 1"
+    description: "Triage a bank security email"
+    difficulty: "easy"
+    grader: "env.graders:grade_task_1"
+  - id: "task_2"
+    name: "Email Triage Task 2"
+    description: "Triage a newsletter email"
+    difficulty: "easy"
+    grader: "env.graders:grade_task_2"
+  - id: "task_3"
+    name: "Email Triage Task 3"
+    description: "Triage an HR review email"
+    difficulty: "easy"
+    grader: "env.graders:grade_task_3"
+
