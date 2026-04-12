@@ -20,19 +20,18 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 ENV_API_URL = os.getenv("ENV_API_URL", "http://localhost:7860")
 
-def get_client() -> Optional[OpenAI]:
+def get_client() -> OpenAI:
     """Safely initialize the OpenAI client."""
+    if not HF_TOKEN:
+        raise ValueError("HF_TOKEN must be provided.")
     try:
-        if not HF_TOKEN:
-            logging.warning("HF_TOKEN is missing. API calls will fail, falling back to default actions.")
-            return None
         return OpenAI(
             base_url=API_BASE_URL,
             api_key=HF_TOKEN
         )
     except Exception as e:
         logging.error(f"Failed to initialize OpenAI client: {e}")
-        return None
+        raise
 
 def get_safe_attribute(obj, attr_name, default="N/A"):
     """Safely get an attribute from an object or dict."""
@@ -54,30 +53,24 @@ def run_inference():
         task_name = task_info["id"]
         benchmark = "openenv-scalar"
         
-        # 1. Initialize the Environment for the specific task
-        try:
-            env = EmailTriageEnv(config={"task_id": task_name})
-        except Exception as e:
-            logging.error(f"Failed to initialize environment for {task_name}: {e}")
-            print(f"[START] task={task_name} env={benchmark} model={MODEL_NAME}")
-            print(f"[END] task={task_name} success=false steps=0 rewards=0.00 score=0.01 error=env_init_failed")
-            continue
-
         # [START] line
         print(f"[START] task={task_name} env={benchmark} model={MODEL_NAME}")
 
-        step_num = 1
+        step_num = 0
         done = False
         rewards = []
+        success = False
         
         try:
+            # 1. Initialize the Environment for the specific task
+            env = EmailTriageEnv(config={"task_id": task_name})
             client = get_client()
             observation = env.reset()
             
             # Max steps to prevent infinite loops (based on task dataset size usually)
             max_steps = 10 
             
-            while not done and observation and step_num <= max_steps:
+            while not done and observation and step_num < max_steps:
                 # Safely extract data from observation
                 sender = get_safe_attribute(observation, "sender", "unknown")
                 subject = get_safe_attribute(observation, "subject", "no subject")
@@ -151,26 +144,15 @@ def run_inference():
                 
                 step_num += 1
 
-            # [END] line
-            try:
-                # Fetch score from server as requested
-                # Note: This assumes the server is running and managing the same env state
-                # In standard OpenEnv, the server handles state per session.
-                res = requests.get(f"{ENV_API_URL}/grader", timeout=5.0)
-                score = res.json().get("score", 0.01)
-            except Exception:
-                # Fallback to local reward calculation if server is unreachable
-                score = sum(rewards) / len(rewards) if rewards else 0.01
-            
-            # Final failsafe clamp: strictly between 0.01 and 0.99
-            score = max(0.01, min(0.99, float(score)))
-            
-            # Output strictly in the required format
-            print(f"[END] task={task_name} score={score:.2f} steps={len(rewards)}")
-
+            success = True
         except Exception as e:
             logging.error(f"Unexpected error in inference loop for {task_name}: {e}")
-            print(f"[END] task={task_name} success=false steps={len(rewards)} score=0.01 error=unhandled_exception")
+            success = False
+        finally:
+            # Emit [END] precisely as required
+            rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+            success_str = "true" if success else "false"
+            print(f"[END] success={success_str} steps={len(rewards)} rewards={rewards_str}")
 
 def main():
     """Main entry point that ensures zero exit code."""
