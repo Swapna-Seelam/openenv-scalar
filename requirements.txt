@@ -4,3 +4,4 @@ openai
 openenv-core
 pydantic
 python-dotenv
+requests
