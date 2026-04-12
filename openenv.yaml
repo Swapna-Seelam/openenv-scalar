@@ -1,4 +1,4 @@
-spec_version: 1
+version: "1.0.0"
 name: openenv-scalar
 type: container
 runtime: docker
@@ -6,20 +6,23 @@ app:
   entrypoint: "python server/app.py"
   port: 7860
 supports_concurrent_sessions: false
-tasks:
-  - id: "task_1"
-    name: "Email Triage Task 1"
-    description: "Triage a bank security email"
-    difficulty: "easy"
-    grader: "env.graders:grade_task_1"
-  - id: "task_2"
-    name: "Email Triage Task 2"
-    description: "Triage a newsletter email"
-    difficulty: "easy"
-    grader: "env.graders:grade_task_2"
-  - id: "task_3"
-    name: "Email Triage Task 3"
-    description: "Triage an HR review email"
-    difficulty: "easy"
-    grader: "env.graders:grade_task_3"
 
+# --------------------------------------------------
+# Phase 2 Task Registration (Dotted Grader Paths)
+# --------------------------------------------------
+tasks:
+  - id: "security_triage"
+    name: "Security Alert Triage"
+    description: "Handle security emails"
+    difficulty: "hard"
+    grader: "tasks.security.grader.grade"
+  - id: "marketing_filter"
+    name: "Marketing Content Filter"
+    description: "Handle spam emails"
+    difficulty: "easy"
+    grader: "tasks.marketing.grader.grade"
+  - id: "office_tasks"
+    name: "Professional Communication"
+    description: "Handle office emails"
+    difficulty: "medium"
+    grader: "tasks.office.grader.grade"
